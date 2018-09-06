@@ -1,35 +1,44 @@
 import pandas as pd
 import classifier
 import sklearn.linear_model as lm
-import features.zip_codes
 import evaluation
-
+import transform.manipulate as tm
+pd.set_option("display.max_columns",30)
 
 if __name__ == '__main__':
-    data_train = pd.read_csv("data/zip.train", header = None, sep =" ")
-    cleaned_train_data = data_train.dropna(axis=1, thresh=2)
+    heart = pd.read_csv("data/heart.csv")
+    print(heart.isnull().sum())
 
-    input_data = cleaned_train_data.iloc[:, 1:].values
-    targets = cleaned_train_data[0].values
+    #Entfernen der NaN
+    heart = heart.dropna()
+    #Reseten des index
+    heart.reset_index(drop=True, inplace=True)
 
-    input_data2 = features.zip_codes.multires(input_data)
+    # Umwandlung von "Yes" in 1 und "No" in 0
+    heart["AHD"] = 1.0 * (heart["AHD"] == "Yes")
 
-    # log reg with simple feature set
-    print("Evaluating simple feature set")
-    log_reg = lm.SGDClassifier(n_jobs=1, loss="log", max_iter = 50)
+    # Aufteilung des Datensatzes in Train und Test
+    train, test = tm.split_train_test(heart,0.2,42, "AHD")
 
-    classifier.fit(log_reg, input_data, targets)
-    pred, pred_proba = classifier.predict(log_reg, input_data)
+    # Datensatz nur mit numerischen Merkmalen
+    train_num = train.drop(labels = ["ChestPain", "Thal", "Sex", "Fbs", "RestECG", "ExAng", "Slope", "Unnamed: 0", "AHD"], axis=1)
+    test_num = test.drop(labels = ["ChestPain", "Thal", "Sex", "Fbs", "RestECG", "ExAng", "Slope", "Unnamed: 0", "AHD"], axis=1)
 
-    evaluation.print_errors(targets, pred)
-    print("")
+    # Datensatz nur mit kategorischen Merkmalen
+    train_cat = train.drop(labels = ["Age","RestBP","Chol","MaxHR","Oldpeak","Ca", "Unnamed: 0"], axis=1)
+    test_cat = test.drop(labels=["Age", "RestBP", "Chol", "MaxHR", "Oldpeak", "Ca", "Unnamed: 0"], axis=1)#
 
-    # log reg with advanced feature set
-    print("Evaluating modified feature set")
-    log_reg2 = lm.SGDClassifier(n_jobs=1, loss="log", max_iter=50)
 
-    classifier.fit(log_reg2, input_data2, targets)
-    pred, pred_proba = classifier.predict(log_reg2, input_data2)
+    # Skalieren des numerischen Datensatzes mit StandardScaler
+    train_num_scaled = tm.std_scaler(train_num)
+    test_num_scaled = tm.std_scaler(test_num)
 
-    evaluation.print_errors(targets, pred)
+    # Factorizen der kategorischen Merkmale
+    train_chestpain_factorized = tm.factorize(train_cat,"ChestPain")
+    train_thal_factorized = tm.factorize(train_cat, "Thal")
+    train_chestpain_factorized = tm.factorize(train_cat, "ChestPain")
+    train_thal_factorized = tm.factorize(train_cat, "Thal")
 
+    # OneHotEncoden der kategorischen Merkmale
+    #train_chestpain_1hot = tm.onehotencode(train_cat,"ChestPain")
+    #print(train_chestpain_1hot)
