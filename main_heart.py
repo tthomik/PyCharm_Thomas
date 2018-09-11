@@ -12,6 +12,7 @@ if __name__ == '__main__':
 
     file = open("data/imdb/test_data.csv", "r")
     test_data = [list(map(int,line.split(','))) for line in file]
+    test_data = pd.DataFrame(test_data)
 
     train_labels = pd.read_csv("data/imdb/train_labels.csv", header=None)
     test_labels = pd.read_csv("data/imdb/test_labels.csv", header=None)
@@ -43,7 +44,7 @@ if __name__ == '__main__':
     # Our vectorized training data
     print(type(train_data))
     #x_train = vectorize_sequences(train_data)
-    print(train_data[])
+    print(train_data)
 
     # Our vectorized test data
     #x_test = vectorize_sequences(test_data)
