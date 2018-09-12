@@ -20,11 +20,18 @@ def onehotencode(df, column):
     df_pd = df_pd.add_prefix(column)
     return df_pd
 
-# Umwandlung von kategorischen Merkmalen mit Text = Objekte, in binäre Merkmale
-def umwandlung_binaer():
+# Factorizen und OneHotEncoden in einem Schritt
+def umwandlung_binaer(df):
+    # Schaut in DataFrames, welche Spalten Objekte enhalten und speichert sie in objects
     objects = df.select_dtypes(include=[object])
 
+    # Speichert Anzahl der Spalten in sum_columns
     sum_columns = len(objects.columns)
+
+    # Values aus den Columns werden genommen und zu objects_list hinzugefügt
+    objects_list = objects.columns.values.tolist()
+
+    df_dropped = df.drop(labels=objects_list, axis=1, errors='ignore')
 
     for column in range(0, (sum_columns)):
         cat = objects.iloc[:, column]
@@ -34,9 +41,10 @@ def umwandlung_binaer():
         cat_1hot = encoder.fit_transform(cat_encoded.reshape(-1, 1))
         np_cat_1hot = cat_1hot.toarray()
         pd_cat_1hot = pd.DataFrame(np_cat_1hot)
+
+        # Columns von pd_cat_1hot sollen heißen wie Objekte in list_categories
         pd_cat_1hot.columns = list_categories
-        objects_list = objects.columns.values.tolist()
-        df_dropped = df.drop(labels=objects_list, axis=1, errors='ignore')
+
         df_dropped.reset_index(drop=True, inplace=True)
         df = pd.concat((df_dropped, pd_cat_1hot), axis=1)
 
